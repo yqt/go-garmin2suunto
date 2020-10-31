@@ -1,0 +1,1 @@
+# go-garmin2suunto
