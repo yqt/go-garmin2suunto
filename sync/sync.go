@@ -27,12 +27,8 @@ var (
 func SynchronizeLatestActivities(userInfo UserInfo) (bool, error) {
 	currentTime := time.Now().AddDate(0, 0, -1)
 	currentDate := currentTime.Format("2006-01-02")
-	existedMoveItems, err := suunto.GetMoveItems(userInfo.Suunto.Email, userInfo.Suunto.UserKey, currentDate, 10)
-	if err != nil {
-		return false, err
-	}
 
-	err = garmin.Auth(userInfo.Garmin.Email, userInfo.Garmin.Password)
+	err := garmin.Auth(userInfo.Garmin.Email, userInfo.Garmin.Password)
 	if err != nil {
 		return false, err
 	}
@@ -44,6 +40,11 @@ func SynchronizeLatestActivities(userInfo UserInfo) (bool, error) {
 
 	if len(activityItems) == 0 {
 		return true, errors.New("empty activities")
+	}
+
+	existedMoveItems, err := suunto.GetMoveItems(userInfo.Suunto.Email, userInfo.Suunto.UserKey, currentDate, 10)
+	if err != nil {
+		return false, err
 	}
 
 	succeedActivityIds := make([]int64, 0)
