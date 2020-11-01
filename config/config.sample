@@ -1,0 +1,11 @@
+package config
+
+var (
+	GarminEmail    = ""
+	GarminPassword = ""
+
+	SuuntoEmail    = ""
+	SuuntoUserKey  = ""
+
+	SourcePrefix   = "go-garmin2suunto"
+)
