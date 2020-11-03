@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/yqt/go-garmin2suunto/config"
 	"github.com/yqt/go-garmin2suunto/garmin"
 	"github.com/yqt/go-garmin2suunto/suunto"
 	"os"
@@ -13,12 +14,12 @@ import (
 var (
 	userInfo = UserInfo{
 		Suunto: suunto.UserInfo{
-			Email:   "",
-			UserKey: "",
+			Email:   config.SuuntoEmail,
+			UserKey: config.SuuntoUserKey,
 		},
 		Garmin: garmin.UserInfo{
-			Email:    "",
-			Password: "",
+			Email:    config.GarminEmail,
+			Password: config.SourcePrefix,
 		},
 	}
 )
@@ -54,7 +55,7 @@ func TestSaveActivities(t *testing.T) {
 	activitySplits, err := garmin.GetActivitySplits(activityId)
 	assert.Nil(t, err)
 
-	move, err := Convert(activity, activityDetails, activitySplits, "")
+	move, err := Convert(activity, activityDetails, activitySplits, config.SourcePrefix)
 	assert.Nil(t, err)
 
 	moveResult, err := suunto.SaveMove(userInfo.Suunto.Email, userInfo.Suunto.UserKey, move)

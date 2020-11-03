@@ -91,16 +91,14 @@ func SynchronizeLatestActivities(userInfo UserInfo) (bool, error) {
 		"err":                err,
 	}).Debug("sync detail")
 
-	if len(succeedActivityIds) != 0 {
-		return true, errors.New(
-			fmt.Sprintf(
-				" partial success. id[%v] sync failed. id[%v] skipped",
-				failedActivityIds, skippedActivityIds))
+	suc := true
+	if len(succeedActivityIds) == 0 && len(failedActivityIds) != 0 {
+		suc = false
 	}
-	return false, errors.New(
+	return suc, errors.New(
 		fmt.Sprintf(
-			"id[%v] sync failed. id[%v] skipped",
-			failedActivityIds, skippedActivityIds))
+			"id[%v] succeeded. id[%v] failed. id[%v] skipped.",
+			succeedActivityIds, failedActivityIds, skippedActivityIds))
 }
 
 func syncSingleActivity(userInfo UserInfo, activityId int64) (suunto.MoveResult, error) {
