@@ -30,9 +30,10 @@ func Auth(email string, password string) error {
 		"service":  ApiServicePrefix + "/modern",
 		"clientId": "GarminConnect",
 		//"gauthHost": ApiServicePrefix + "/modern",
-		"gauthHost": SsoPrefix + "/sso",
-		//"generateExtraServiceTicket": "true",
-		"consumeServiceTicket": "false",
+		"gauthHost":                      SsoPrefix + "/sso",
+		"generateExtraServiceTicket":     "true",
+		"generateTwoExtraServiceTickets": "true",
+		"consumeServiceTicket":           "false",
 	}
 
 	uri := SsoPrefix + "/sso/signin"
@@ -42,7 +43,7 @@ func Auth(email string, password string) error {
 	}
 	requestClient.SetHeaders(headers)
 
-	respText, err := requestClient.Get(uri, nil)
+	respText, err := requestClient.Get(uri, params)
 	if err != nil {
 		return err
 	}
@@ -85,7 +86,7 @@ func Auth(email string, password string) error {
 }
 
 func GetActivity(id int64) (Activity, error) {
-	uri := ApiServicePrefix + "/modern/proxy/activity-service/activity/" + strconv.FormatInt(id, 10)
+	uri := ApiServicePrefix + "/proxy/activity-service/activity/" + strconv.FormatInt(id, 10)
 	activity := Activity{}
 	err := requestClient.GetJson(uri, nil, &activity)
 	if err != nil {
@@ -96,7 +97,7 @@ func GetActivity(id int64) (Activity, error) {
 }
 
 func GetActivityDetails(id int64) (ActivityDetail, error) {
-	uri := ApiServicePrefix + "/modern/proxy/activity-service/activity/" + strconv.FormatInt(id, 10) + "/details"
+	uri := ApiServicePrefix + "/proxy/activity-service/activity/" + strconv.FormatInt(id, 10) + "/details"
 	activityDetail := ActivityDetail{}
 	err := requestClient.GetJson(uri, nil, &activityDetail)
 	if err != nil {
@@ -107,7 +108,7 @@ func GetActivityDetails(id int64) (ActivityDetail, error) {
 }
 
 func GetActivitySplits(id int64) (ActivitySplit, error) {
-	uri := ApiServicePrefix + "/modern/proxy/activity-service/activity/" + strconv.FormatInt(id, 10) + "/splits"
+	uri := ApiServicePrefix + "/proxy/activity-service/activity/" + strconv.FormatInt(id, 10) + "/splits"
 	activitySplit := ActivitySplit{}
 	err := requestClient.GetJson(uri, nil, &activitySplit)
 	if err != nil {
@@ -118,7 +119,7 @@ func GetActivitySplits(id int64) (ActivitySplit, error) {
 }
 
 func GetActivityItems(start int, limit int, startDate string) ([]ActivityItem, error) {
-	uri := ApiServicePrefix + "/modern/proxy/activitylist-service/activities/search/activities"
+	uri := ApiServicePrefix + "/proxy/activitylist-service/activities/search/activities"
 	activityItems := make([]ActivityItem, 0)
 	params := map[string]interface{}{
 		"start": start,
