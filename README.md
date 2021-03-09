@@ -18,3 +18,5 @@ go build -ldflags '-s -w' -o garmin2suunto
 [tapiriik](https://github.com/cpfair/tapiriik)
 
 [garmin-connect](https://github.com/abrander/garmin-connect)
+
+[garminexport](https://github.com/petergardfjall/garminexport)
