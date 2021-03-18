@@ -2,13 +2,25 @@
 
 **UNSTABLE**
 
+## Usage notice
+
+Requesting unofficial APIs and simulated website login behaviors can be suspicious to Garmin.
+
+Use it AT YOUR OWN RISK.
+
 ## Usage
 
 ```
 cp config/config.sample config/config.go
-# filling config.go with garmin and suunto(movescount) account info
+# Filling config.go with garmin and suunto(movescount) account info
 cd main
 go build -ldflags '-s -w' -o garmin2suunto
+
+# Specific port to listen. default is 38080.
+PORT=38080 ./garmin2suunto
+# Sync latest garmin activities of TODAY(up to 3 activities) to movescount
+# It will try to log in to Garmin website in ervery sync process since login session persistence is not implemented.
+curl 'http://localhost:38080/api/sync'
 ```
 
 ## Thanks
