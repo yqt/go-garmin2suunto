@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/yqt/go-garmin2suunto/config"
 	"github.com/yqt/go-garmin2suunto/garmin"
 	"os"
 	"testing"
 )
 
 var (
-	email    = ""
-	password = ""
+	email    = config.GarminEmail
+	password = config.GarminPassword
 )
 
 func TestConvert(t *testing.T) {
@@ -31,7 +32,7 @@ func TestConvert(t *testing.T) {
 	activitySplits, err := garmin.GetActivitySplits(activityId)
 	assert.Nil(t, err)
 
-	move, err := Convert(activity, activityDetails, activitySplits, "test")
+	move, err := Convert(activity, activityDetails, activitySplits, config.SourcePrefix)
 	assert.Nil(t, err)
 
 	moveBytes, err := json.Marshal(move)

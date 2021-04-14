@@ -52,20 +52,28 @@ func (a *ActivityDetailMetric) GetHeartRate(index *MetricIndex) float64 {
 }
 
 func (a *ActivityDetailMetric) GetLocalTime(index *MetricIndex) string {
-	idx := index.Time
-	if idx < 0 {
+	ts := a.GetTimeStamp(index)
+	if ts == -1 {
 		return ""
 	}
-	if a.Metrics[idx] == 0 {
-		return ""
-	}
-	ts := int64(a.Metrics[idx])
 	tmp := time.Unix(0, ts*int64(time.Millisecond)).Format(time.RFC3339)
 	tailStartPos := strings.Index(tmp, "+")
 	if tailStartPos != -1 {
 		tmp = tmp[:tailStartPos]
 	}
 	return tmp
+}
+
+func (a *ActivityDetailMetric) GetTimeStamp(index *MetricIndex) int64 {
+	idx := index.Time
+	if idx < 0 {
+		return -1
+	}
+	if a.Metrics[idx] == 0 {
+		return -1
+	}
+	ts := int64(a.Metrics[idx])
+	return ts
 }
 
 type MetricIndex struct {

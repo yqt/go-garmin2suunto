@@ -8,4 +8,5 @@ type TrackPoint struct {
 	LocalTime string  `json:"LocalTime,omitempty"`
 	Longitude float64 `json:"Longitude,omitempty"`
 	Speed     float64 `json:"Speed,omitempty"`
+	Timestamp int64   `json:"-"`
 }

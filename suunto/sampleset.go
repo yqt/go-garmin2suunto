@@ -13,6 +13,7 @@ type SampleSet struct {
 	Temperature       float32 `json:"Temperature,omitempty"`
 	VerticalSpeed     float32 `json:"VerticalSpeed,omitempty"`
 
-	Cadence float32 `json:"Cadence"`
-	Epoc    float32 `json:"Epoc,omitempty"`
+	Cadence   float32 `json:"Cadence,omitempty"`
+	Epoc      float32 `json:"Epoc,omitempty"`
+	Timestamp int64   `json:"-"`
 }

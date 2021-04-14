@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"github.com/yqt/go-garmin2suunto/garmin"
 	"github.com/yqt/go-garmin2suunto/suunto"
+	"math"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -31,7 +33,10 @@ func Convert(
 	move.DescentAltitude = activity.Summary.ElevationLoss
 
 	move.Distance = int(activity.Summary.Distance)
-	move.Duration = activity.Summary.Duration
+	move.Duration = activity.Summary.MovingDuration
+	if move.Duration == 0 {
+		move.Duration = activity.Summary.Duration
+	}
 
 	move.AvgHR = int(activity.Summary.AverageHR)
 	move.PeakHR = int(activity.Summary.MaxHR)
@@ -51,30 +56,31 @@ func Convert(
 	move.MinTemp = float32(activity.Summary.MinTemperature)
 	move.MaxTemp = float32(activity.Summary.MaxTemperature)
 
-	move.AvgBikeCadence = float32(activity.Summary.AverageBikeCadence)
-	move.MaxBikeCadence = float32(activity.Summary.MaxBikeCadence)
+	// NOTE: cadence in Garmin activity summary is doubled
+	move.AvgBikeCadence = float32(activity.Summary.AverageBikeCadence / 2)
+	move.MaxBikeCadence = float32(activity.Summary.MaxBikeCadence / 2)
 
 	if move.AvgBikeCadence == 0 {
-		move.AvgBikeCadence = float32(activity.Summary.AverageRunCadence)
+		move.AvgBikeCadence = float32(activity.Summary.AverageRunCadence / 2)
 	}
 	if move.MaxBikeCadence == 0 {
-		move.MaxBikeCadence = float32(activity.Summary.MaxRunCadence)
+		move.MaxBikeCadence = float32(activity.Summary.MaxRunCadence / 2)
 	}
 
-	move.AvgRunningCadence = float32(activity.Summary.AverageRunCadence)
-	move.MaxRunningCadence = float32(activity.Summary.MaxRunCadence)
+	move.AvgRunningCadence = float32(activity.Summary.AverageRunCadence / 2)
+	move.MaxRunningCadence = float32(activity.Summary.MaxRunCadence / 2)
 
 	move.TrainingEffect = float32(activity.Summary.TrainingEffect)
 	move.PeakTrainingEffect = float32(activity.Summary.TrainingEffect)
 
-	move.AvgCadence = float32(activity.Summary.AverageRunCadence)
-	move.MaxCadence = float32(activity.Summary.MaxRunCadence)
+	move.AvgCadence = float32(activity.Summary.AverageRunCadence / 2)
+	move.MaxCadence = float32(activity.Summary.MaxRunCadence / 2)
 
 	if move.AvgCadence == 0 {
-		move.AvgCadence = float32(activity.Summary.AverageBikeCadence)
+		move.AvgCadence = float32(activity.Summary.AverageBikeCadence / 2)
 	}
 	if move.MaxCadence == 0 {
-		move.MaxCadence = float32(activity.Summary.MaxBikeCadence)
+		move.MaxCadence = float32(activity.Summary.MaxBikeCadence / 2)
 	}
 
 	// NOTE: sequence bellow cares
@@ -139,7 +145,6 @@ func convertToMoveMarks(split garmin.ActivitySplit, move *suunto.Move) []suunto.
 	lapStats := make(map[int]map[string]float32)
 	for _, ss := range move.Samples.SampleSets {
 		for idx, v := range moveDistanceInterval[targetIdx:] {
-			// NOTE: 如果sample中的距离超过当前圈总距离，当前圈最低心率等数值则为到上一轮为止的结果
 			if ss.Distance > v {
 				targetIdx += idx + 1
 				break
@@ -175,18 +180,30 @@ func convertToMoveMarks(split garmin.ActivitySplit, move *suunto.Move) []suunto.
 func convertToSamples(detail garmin.ActivityDetail, move *suunto.Move) suunto.Samples {
 	sampleSets := make([]suunto.SampleSet, 0)
 
+	startTs := int64(math.MaxInt64)
+	endTs := int64(math.MinInt64)
+
 	metricIndex := garmin.NewMetricIndex(detail.MetricDescriptors)
 	minHR := InvalidHeartRateHigh
 	for _, metric := range detail.ActivityDetailMetrics {
 		cadence := float32(metric.GetCadence(metricIndex))
+		ts := metric.GetTimeStamp(metricIndex)
+		if ts < startTs {
+			startTs = ts
+		}
+		if ts > endTs {
+			endTs = ts
+		}
 		ss := suunto.SampleSet{
 			BikeCadence: cadence,
-			Cadence:     cadence,
-			Distance:    int(metric.GetDistance(metricIndex)),
-			HeartRate:   int(metric.GetHeartRate(metricIndex)),
-			LocalTime:   metric.GetLocalTime(metricIndex),
-			//RunningCadence: float32(metric.GetRunningCadence(metricIndex)),
-			Speed: float32(metric.GetSpeed(metricIndex)),
+			//Cadence:       cadence,
+			// NOTE:
+			//RunningCadence: cadence,
+			Distance:  int(math.Round(metric.GetDistance(metricIndex))),
+			HeartRate: int(math.Round(metric.GetHeartRate(metricIndex))),
+			LocalTime: metric.GetLocalTime(metricIndex),
+			Speed:     float32(metric.GetSpeed(metricIndex)),
+			Timestamp: ts,
 		}
 		sampleSets = append(sampleSets, ss)
 
@@ -200,6 +217,14 @@ func convertToSamples(detail garmin.ActivityDetail, move *suunto.Move) suunto.Sa
 	if minHR != InvalidHeartRateHigh && minHR < move.PeakHR {
 		move.MinHR = minHR
 	}
+	// NOTE: set duration if not set in details
+	if move.Duration == 0 {
+		move.Duration = float64(endTs-startTs) / 1000
+	}
+
+	sort.SliceStable(sampleSets, func(i, j int) bool {
+		return sampleSets[i].Timestamp < sampleSets[j].Timestamp
+	})
 
 	samples := suunto.Samples{
 		SampleSets: sampleSets,
@@ -218,10 +243,15 @@ func convertToTrack(detail garmin.ActivityDetail) suunto.Track {
 			Longitude: track.Longitude,
 			LocalTime: track.GetTimeLocale(),
 			Speed:     track.Speed,
+			Timestamp: track.Time,
 		}
 
 		trackPoints = append(trackPoints, tp)
 	}
+
+	sort.SliceStable(trackPoints, func(i, j int) bool {
+		return trackPoints[i].Timestamp < trackPoints[j].Timestamp
+	})
 
 	track := suunto.Track{
 		TrackPoints: trackPoints,
