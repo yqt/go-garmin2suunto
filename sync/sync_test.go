@@ -19,7 +19,7 @@ var (
 		},
 		Garmin: garmin.UserInfo{
 			Email:    config.GarminEmail,
-			Password: config.SourcePrefix,
+			Password: config.GarminPassword,
 		},
 	}
 )

@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
+	"github.com/yqt/go-garmin2suunto/config"
 	"os"
 	"testing"
 )
 
 var (
-	email    = ""
-	password = ""
+	email    = config.GarminEmail
+	password = config.GarminPassword
 )
 
 func TestAuth(t *testing.T) {
